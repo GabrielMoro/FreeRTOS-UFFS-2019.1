@@ -50,9 +50,86 @@
 /* FreeRTOS.org includes. */
 #include <Arduino_FreeRTOS.h>
 
-void setup() {
-  
+#define N 5   /* Definição da quantia de filósofos */
 
+/* Estados */
+#define THINKING 0
+#define HUNGRY 1
+#define EATING 2
+
+const char *s[3] = {"Pensando", "Com fome", "Comendo"};
+const uint8_t f_id[N] = {0, 1, 2, 3, 4};  /* Sem isso os IDs passados por parâmetro na criação das tarefas dos filósofos pega valores errado (geralmente 0, 2, 3, 4, 5)*/
+uint8_t states[N];                        /* Guarda o estado atual dos filósofos */
+
+void State( unsigned portLONG id, unsigned portLONG state ){  /* Usando a função 'vPrintStringAndNumber' como base */
+  /* Print the string, suspending the scheduler as method of mutual
+  exclusion. */
+  vTaskSuspendAll();
+  {
+      Serial.print("Filósofo ");
+      Serial.print(id);
+      Serial.print(" no estado: ");
+      Serial.print(s[state]);
+      Serial.flush();
+  }
+  xTaskResumeAll();
+
+  /* Allow any key to stop the application running. */
+  if( Serial.available() )
+  {
+    vTaskEndScheduler();
+  }
+}
+
+void vPrintStringAndNumber( const char *pcString, unsigned portLONG ulValue )
+{
+  /* Print the string, suspending the scheduler as method of mutual
+  exclusion. */
+  vTaskSuspendAll();
+  {
+      Serial.print(pcString);
+      Serial.write(' ');
+      Serial.println(ulValue);
+      Serial.flush();
+  }
+  xTaskResumeAll();
+
+  /* Allow any key to stop the application running. */
+  if( Serial.available() )
+  {
+    vTaskEndScheduler();
+  }
+}
+
+int left(int id){
+    return((id+N-1)%N);
+}
+
+int right(int id){
+  return((id+1)%N);
+}
+
+void philosopher(void *param){
+  const uint8_t id = *(uint8_t *)param;
+  vPrintStringAndNumber("Filósofo instanciado: ", id);
+  for(;;){
+    
+  }
+}
+
+void setup() {
+  Serial.begin(9600);
+  
+  uint8_t i;
+  
+  /* Instanciando filósofos */
+  for(i = 0; i < N; i++){
+    states[i] = 0;
+    xTaskCreate(philosopher, NULL, 100, f_id + i, 1, NULL);
+  }
+
+  vTaskStartScheduler();
+  for (;;);
 }
 
 void loop() {}
