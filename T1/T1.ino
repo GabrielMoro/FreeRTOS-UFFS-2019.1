@@ -49,6 +49,7 @@
 
 /* FreeRTOS.org includes. */
 #include <Arduino_FreeRTOS.h>
+#include <queue.h>
 
 #define N 5   /* Definição da quantia de filósofos */
 
@@ -59,7 +60,10 @@
 
 const char *s[3] = {"Pensando", "Com fome", "Comendo"};
 const uint8_t f_id[N] = {0, 1, 2, 3, 4};  /* Sem isso os IDs passados por parâmetro na criação das tarefas dos filósofos pega valores errado (geralmente 0, 2, 3, 4, 5)*/
+
 uint8_t states[N];                        /* Guarda o estado atual dos filósofos */
+
+QueueHandle_t forks[N];                   /* Estado dos garfos*/
 
 void State( unsigned portLONG id, unsigned portLONG state ){  /* Usando a função 'vPrintStringAndNumber' como base */
   /* Print the string, suspending the scheduler as method of mutual
@@ -70,6 +74,7 @@ void State( unsigned portLONG id, unsigned portLONG state ){  /* Usando a funç�
       Serial.print(id);
       Serial.print(" no estado: ");
       Serial.print(s[state]);
+      Serial.print("\n");
       Serial.flush();
   }
   xTaskResumeAll();
@@ -101,17 +106,26 @@ void vPrintStringAndNumber( const char *pcString, unsigned portLONG ulValue )
   }
 }
 
-int left(int id){
+int left(uint8_t id){
     return((id+N-1)%N);
 }
 
-int right(int id){
+int right(uint8_t id){
   return((id+1)%N);
+}
+
+void test(uint8_t id){
+  
+}
+
+void takeFork(void *param){
+  
 }
 
 void philosopher(void *param){
   const uint8_t id = *(uint8_t *)param;
   vPrintStringAndNumber("Filósofo instanciado: ", id);
+  State(id, states[id]);
   for(;;){
     
   }
@@ -126,6 +140,10 @@ void setup() {
   for(i = 0; i < N; i++){
     states[i] = 0;
     xTaskCreate(philosopher, NULL, 100, f_id + i, 1, NULL);
+  }
+
+  for(i = 0; i < N; i++){
+    forks[i] = xQueueCreate(1, sizeof(uint8_t));
   }
 
   vTaskStartScheduler();
