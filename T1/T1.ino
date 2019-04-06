@@ -61,13 +61,14 @@
 /* Constantes */
 const char *s[3] = {"Pensando", "Com fome", "Comendo"};
 const uint8_t f_id[N] = {0, 1, 2, 3, 4};              /* Sem isso os IDs passados por parâmetro na criação das tarefas dos filósofos pega valores errado (geralmente 0, 2, 3, 4, 5)*/
-const TickType_t dlay = 1000 / portTICK_PERIOD_MS;  /* 1 segundo */
+const TickType_t dlay = 1000 / portTICK_PERIOD_MS;    /* 1 segundo */
 
-uint8_t states[N], bfr = 1;      /* Guarda o estado atual dos filósofos, buffer */
+uint8_t states[N], bfr = 1;                           /* Guarda o estado atual dos filósofos, buffer */
 
-QueueHandle_t forks[N], take; /* Estado dos garfos*/
+QueueHandle_t forks[N], take;                         /* Filas para os garfos*/
 
-void State( unsigned portLONG id, unsigned portLONG state ){  /* Usando a função 'vPrintStringAndNumber' como base */
+/* Usando a função 'vPrintStringAndNumber' como base */
+void State( unsigned portLONG id, unsigned portLONG state ){
   /* Print the string, suspending the scheduler as method of mutual
   exclusion. */
   vTaskSuspendAll();
@@ -117,12 +118,13 @@ int right(uint8_t id){
 }
 
 void takeFork(void *param){
-  uint8_t phi;  /* Usado para pegar o id do filósofo que tentar comer */
+  uint8_t phi;    /* Usado para pegar o id do filósofo que tentar comer */
   
   for(;;){
-    xQueueReceive(take, &phi, portMAX_DELAY); /* 'phi' contém o id do filósofo que tentar comer, caso a fila esteja vazia a tarefa bloqueia */
-    if(states[phi] == HUNGRY && states[left(phi)] != EATING && states[right(phi)] != EATING) {  /* Caso os filósofos adjacentes estejam comendo os garfos estão ocupados */
-      states[phi] = EATING;                   /* Caso os garfos estejam disponíveis e o filósofo com fome ele pega os garfos e come */
+    xQueueReceive(take, &phi, portMAX_DELAY);   /* 'phi' contém o id do filósofo que tentar comer, caso a fila esteja vazia a tarefa bloqueia */
+    
+    if(states[phi] == HUNGRY && states[left(phi)] != EATING && states[right(phi)] != EATING){    /* Caso os filósofos adjacentes estejam comendo os garfos estão ocupados */
+      states[phi] = EATING;                     /* Caso os garfos estejam disponíveis e o filósofo com fome ele pega os garfos e come */
       xQueueSend(forks[phi], &bfr, portMAX_DELAY);
       State(phi, states[phi]);
     }
@@ -138,19 +140,20 @@ void philosopher(void *param){
   for(;;){
     vTaskDelay(dlay);
     
-    states[id] = HUNGRY;
+    states[id] = HUNGRY;                                /* O filósofo fica com fome depois de pensar */
     State(id, states[id]);
-    
-    xQueueSend(take, &id, portMAX_DELAY);               /* Tenta pegar os garfos */
+
+    /* Tenta pegar os garfos */
+    xQueueSend(take, &id, portMAX_DELAY);
     xQueueReceive(forks[id], &bfr, portMAX_DELAY);
 
     states[id] = THINKING;
     State(id, states[id]);
 
-    vTaskDelay(dlay);
+    vTaskDelay(dlay);                                   /* Tempo para o filósofo 'pensar' */
 
-    xQueueSend(take, &f_id[left(id)], portMAX_DELAY);   /* Testando garfo da esquerda */
-    xQueueSend(take, &f_id[right(id)], portMAX_DELAY);  /* Testando garfo da direita */  
+    xQueueSend(take, &f_id[left(id)], portMAX_DELAY);   /* Testando o filósofo da esquerda */
+    xQueueSend(take, &f_id[right(id)], portMAX_DELAY);  /* Testando o filósofo da direita */  
   }
 }
 
