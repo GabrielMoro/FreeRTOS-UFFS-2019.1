@@ -8,7 +8,7 @@ const TickType_t dlay = 1000 / portTICK_PERIOD_MS;    /* 1 segundo */
 
 SemaphoreHandle_t semBarber, semCstmrs;
 
-uint8_t freeChairs = CHAIR;
+uint8_t CstmWaiting = 0;
 
 void vPrintStringAndNumber( const char *pcString, unsigned portLONG ulValue ){
   /* Print the string, suspending the scheduler as method of mutual
