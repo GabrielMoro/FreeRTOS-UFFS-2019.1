@@ -1,7 +1,7 @@
 #include <Arduino_FreeRTOS.h>
 #include <semphr.h>
 
-#define SEATS 3
+#define SEATS 2
 #define CSTMR 5 /* Customer */
 
 const TickType_t dlay = 1000 / portTICK_PERIOD_MS;    /* 1 segundo */
@@ -27,7 +27,8 @@ void vPrintString( const char *pcString ){
 
 void barber(void *param){
   for(;;){
-    
+    if(freeSeats == SEATS)
+      vPrintString("Barbeiro dormindo...");
     xSemaphoreTake(semCstmrs, portMAX_DELAY); // Esperando clientes
     xSemaphoreTake(mutex, portMAX_DELAY);
     freeSeats += 1;
@@ -40,17 +41,16 @@ void barber(void *param){
 
 void customer(void *param){
   for(;;){
-    vTaskDelay(random(500, 1500) / portTICK_PERIOD_MS);
+    vTaskDelay(random(1500, 3000) / portTICK_PERIOD_MS);
     xSemaphoreTake(mutex, portMAX_DELAY);
     if(freeSeats > 0){
       freeSeats -= 1;
-      vPrintString("Esperando...");
+      vPrintString("Cliente esperando...");
       xSemaphoreGive(semCstmrs);
       xSemaphoreGive(mutex);
       xSemaphoreTake(semBarber, portMAX_DELAY);
-      vPrintString("Cortando o cabelo...");
     }else{
-      vPrintString("Barbearia cheia");
+      vPrintString("Barbearia cheia!!");
       xSemaphoreGive(mutex);
     }
   }
