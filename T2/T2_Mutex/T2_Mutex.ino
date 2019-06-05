@@ -6,7 +6,7 @@
 
 const TickType_t dlay = 1000 / portTICK_PERIOD_MS;    /* 1 segundo */
 
-SemaphoreHandle_t semBarber, semCstmrs, mutex;
+SemaphoreHandle_t semBarber, semCstmrs, seatsMutex;
 
 uint8_t freeSeats = SEATS;
 
@@ -30,11 +30,11 @@ void barber(void *param){
     if(freeSeats == SEATS)
       vPrintString("Barbeiro dormindo...");
     xSemaphoreTake(semCstmrs, portMAX_DELAY); // Esperando clientes
-    xSemaphoreTake(mutex, portMAX_DELAY);
+    xSemaphoreTake(seatsMutex, portMAX_DELAY);
     freeSeats += 1;
     vPrintString("Barbeiro trabalhando...");
     xSemaphoreGive(semBarber);
-    xSemaphoreGive(mutex);
+    xSemaphoreGive(seatsMutex);
     vTaskDelay(dlay);
   }
 }
@@ -42,16 +42,16 @@ void barber(void *param){
 void customer(void *param){
   for(;;){
     vTaskDelay(random(1500, 3000) / portTICK_PERIOD_MS);
-    xSemaphoreTake(mutex, portMAX_DELAY);
+    xSemaphoreTake(seatsMutex, portMAX_DELAY);
     if(freeSeats > 0){
       freeSeats -= 1;
       vPrintString("Cliente esperando...");
       xSemaphoreGive(semCstmrs);
-      xSemaphoreGive(mutex);
+      xSemaphoreGive(seatsMutex);
       xSemaphoreTake(semBarber, portMAX_DELAY);
     }else{
       vPrintString("Barbearia cheia!!");
-      xSemaphoreGive(mutex);
+      xSemaphoreGive(seatsMutex);
     }
   }
 }
@@ -61,13 +61,12 @@ void setup() {
 
   semBarber = xSemaphoreCreateBinary();
   semCstmrs = xSemaphoreCreateCounting(SEATS, 0);
-  mutex = xSemaphoreCreateMutex();
+  seatsMutex = xSemaphoreCreateMutex();
 
   xTaskCreate(barber, NULL, 70, NULL, 1, NULL);
 
   for(uint8_t i = 0; i < CSTMR; i++)
     xTaskCreate(customer, NULL, 70, NULL, 1, NULL);
-  /* ... */
 
   vTaskStartScheduler();
   for (;;);
