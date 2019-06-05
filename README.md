@@ -1,4 +1,4 @@
-# Tópicos especiais em computação XVII | Sistemas em tempo real (FreeRTOS) - UFFS - 2018.1
+# Tópicos especiais em computação XVII | Sistemas em tempo real (FreeRTOS) - UFFS - 2019.1
 
 Problemas implementados na plataforma _Arduíno Uno_ utilizando o porte para _Arduíno Uno_ do FreeRTOS
 
