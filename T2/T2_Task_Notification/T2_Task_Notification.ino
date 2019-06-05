@@ -6,45 +6,68 @@
 
 const TickType_t dlay = 1000 / portTICK_PERIOD_MS;    /* 1 segundo */
 
-TaskHandle_t *barberHandle;
+TaskHandle_t barberHandle;
+SemaphoreHandle_t seatsMutex;
 
 uint8_t freeSeats = SEATS;
 
-void vPrintString( const char *pcString ){
+void vPrintString( const char *pcString ) {
   vTaskSuspendAll();
   {
-      Serial.print(pcString);
-      Serial.println("");
-      Serial.flush();
+    Serial.print(pcString);
+    Serial.println("");
+    Serial.flush();
   }
   xTaskResumeAll();
 
-  if( Serial.available() )
+  if ( Serial.available() )
   {
     vTaskEndScheduler();
   }
 }
 
-void barber(void *param){
-  for(;;){
-    vPrintString("Barber");
+void barber(void *param) {
+  for (;;) {
+    if (freeSeats == SEATS)
+      vPrintString("(Barber) Dormindo...");
+    ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
+    xSemaphoreTake(seatsMutex, portMAX_DELAY);
+    freeSeats += 1;
+    vPrintString("\n(Barber) Trabalhando...");
+    Serial.print("(Barber) Bancos livres: ");
+    Serial.println(freeSeats);
+    xSemaphoreGive(seatsMutex);
+    vTaskDelay(dlay);
+    vPrintString("\n(Barber) Terminou...");
   }
 }
 
-void customer(void *param){
-  for(;;){
-    vPrintString("Customer");
+void customer(void *param) {
+  for (;;) {
+    vTaskDelay(random(1500, 3000) / portTICK_PERIOD_MS);
+    xSemaphoreTake(seatsMutex, portMAX_DELAY);
+    vPrintString("\n(Customer) Entrando...");
+    if (freeSeats > 0) {
+      freeSeats -= 1;
+      vPrintString("(Customer) Esperando...");
+      Serial.print("(Customer) Bancos livres: ");
+      Serial.println(freeSeats);
+      xTaskNotifyGive(barberHandle);
+      xSemaphoreGive(seatsMutex);
+    } else {
+      vPrintString("(Customer) Barbearia cheia!!");
+      xSemaphoreGive(seatsMutex);
+    }
   }
 }
 
 void setup() {
   Serial.begin(9600);
 
-  xTaskCreate(barber, NULL, 70, NULL, 1, barberHandle);
-
-  for(uint8_t i = 0; i < CSTMR; i++)
-    xTaskCreate(customer, NULL, 70, NULL, 1, NULL);
-
+  seatsMutex = xSemaphoreCreateMutex();
+  xTaskCreate(barber, NULL, 80, NULL, 1, &barberHandle);
+  for (uint8_t i = 0; i < CSTMR; i++)
+    xTaskCreate(customer, NULL, 100, NULL, 1, NULL);
   vTaskStartScheduler();
   for (;;);
 }
