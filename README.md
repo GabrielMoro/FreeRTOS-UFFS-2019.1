@@ -11,5 +11,5 @@ Implementação do problema feita sem o uso de mutex ou semáforos
 Implementação do problema em três formas:
 
 * Utilizando _mutexes_ e _semáforos_;
-* Utilizando grupo de eventos;
+* Utilizando grupo de eventos; (Não implementado)
 * Utilizando notificação de tarefas.
