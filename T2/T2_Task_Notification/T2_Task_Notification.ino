@@ -67,7 +67,7 @@ void setup() {
   seatsMutex = xSemaphoreCreateMutex();
   xTaskCreate(barber, NULL, 80, NULL, 1, &barberHandle);
   for (uint8_t i = 0; i < CSTMR; i++)
-    xTaskCreate(customer, NULL, 100, NULL, 1, NULL);
+    xTaskCreate(customer, NULL, 80, NULL, 1, NULL);
   vTaskStartScheduler();
   for (;;);
 }
